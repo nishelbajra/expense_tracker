@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard · Expense Tracker</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: { extend: { colors: { brand: { DEFAULT: "#38bdf8" } } } },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="h-full bg-slate-900 text-slate-100">
+    <main class="mx-auto max-w-6xl px-4 py-8">
+      <h1 class="text-3xl font-semibold mb-2">Dashboard</h1>
+      <p class="text-slate-400 mb-6">
+        Track spending, filter by date/category, and visualize instantly.
+      </p>
+
+      <!-- Filters + Add form -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Filters -->
+        <section
+          class="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4"
+        >
+          <h2 class="text-lg font-semibold mb-3">Filters</h2>
+          <form class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end pr-5">
+            <label class="text-sm">
+              <span class="block mb-1 text-slate-300">Start</span>
+              <input
+                type="date"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+              />
+            </label>
+            <label class="text-sm">
+              <span class="block mb-1 text-slate-300">End</span>
+              <input
+                type="date"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+              />
+            </label>
+            <label class="text-sm md:col-span-2">
+              <span class="block mb-1 text-slate-300">Category</span>
+              <select
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+              >
+                {%for c in categories%}
+                <option value="{{c}}">{{c}}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <div class="flex gap-2">
+              <button
+                class="rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30"
+                type="submit"
+              >
+                Apply
+              </button>
+              <a
+                class="rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700"
+                href="#"
+                >Reset</a
+              >
+            </div>
+          </form>
+
+          <!-- Total -->
+          <div class="mt-4 text-sm text-slate-300">
+            <span class="mr-2">Total:</span>
+            <span
+              class="inline-block rounded-xl border border-slate-700 bg-slate-800 px-3 py-1 font-semibold"
+            >
+              $0.00
+            </span>
+          </div>
+
+          <!-- Export link -->
+          <div class="mt-3">
+            <a
+              class="text-xs text-slate-400 hover:text-brand underline"
+              href="#"
+            >
+              Export CSV (current filter)
+            </a>
+          </div>
+        </section>
+
+        <!-- Add Expense -->
+        <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h2 class="text-lg font-semibold mb-3">Add Expense</h2>
+          <form method="post" action="{{url_for('add')}}" class="space-y-3">
+            <label class="block text-sm">
+              <span class="mb-1 block text-slate-300">Description</span>
+              <input
+                name ="description"
+                placeholder="e.g., Groceries"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+              />
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="mb-1 block text-slate-300">Amount</span>
+                <input
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="25.00"
+                  class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                />
+              </label>
+              <label class="block text-sm">
+                <span class="mb-1 block text-slate-300">Date</span>
+                <input
+                  name="date"
+                  type="date"
+                  class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                />
+              </label>
+            </div>
+            <label class="block text-sm">
+              <span class="mb-1 block text-slate-300">Category</span>
+              <select name ="category"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+              >
+                <option>Food</option>
+                <option>Transport</option>
+                <option>Rent</option>
+                <option>Utilities</option>
+              </select>
+            </label>
+            <button
+              class="w-full rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30"
+              type="submit"
+            >
+              Add Expense
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <!-- Total (global) -->
+      <div class="mb-3 mt-6">
+        <span class="text-sm text-slate-300 mr-2">Total:</span>
+        <span
+          class="inline-block rounded-xl border border-slate-700 bg-slate-800 px-3 py-1 font-semibold"
+        >
+          ${{ '%2.f'|format(total or 0)}}
+        </span>
+      </div>
+
+      <!-- Expenses table -->
+      <section class="rounded-2xl border border-slate-800 bg-slate-900">
+        <div class="px-4 py-3 border-b border-slate-800">
+          <h2 class="text-lg font-semibold">Expenses</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-slate-300 bg-slate-800/50">
+              <tr>
+                <th class="text-left px-4 py-3">Date</th>
+                <th class="text-left px-4 py-3">Description</th>
+                <th class="text-left px-4 py-3">Category</th>
+                <th class="text-right px-4 py-3">Amount</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+                {% if expenses %} {% for e in expenses %}
+
+              <tr class="border-t border-slate-800 hover:bg-slate-800/30">
+                <td class="px-4 py-2">{{e.date.strftime("%Y-%m-%d") if e.date else ''}}</td>
+                <td class="px-4 py-2">{{e.description}}</td>
+                <td class="px-4 py-2">{{e.category}}</td>
+                <td class="px-4 py-2 text-right">{{ '%.2f'|format(e.amount) }}</td>
+                <td class="px-4 py-2 text-right">                   
+                <form 
+                      method = "post" 
+                      action="{{url_for('delete', expense_id=e.id)}}"
+                      onsubmit="return confirm('Are you sure you want to delete')"
+
+                >
+                  <button
+                    class="text-rose-300 hover:text-rose-200 text-xs border border-rose-400/30 px-3 py-1 rounded-lg"
+                  >
+                    Delete
+                  </button>
+                  </form>
+                </td>
+              </tr>
+
+              {% endfor %} {% else %}
+
+              <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-slate-400">
+                  No expenses yet — add your first one above.
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 class="font-semibold mb-2">By Category</h3>
+          <canvas id="catChart" height="140"></canvas>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <h3 class="font-semibold mb-2">Spending Over Time</h3>
+          <canvas id="dayChart" height="140"></canvas>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
