@@ -36,14 +36,30 @@ def parse_date_or_none(s: str):
 @app.route("/")
 def index():
 
+    # 1 read query strings 
+
     start_str = request.args.get("start" or "").strip()
     end_str = (request.args.get("end") or "").strip()
 
-    
+    # 2 parsing
 
+    start_date = parse_date_or_none(start_str)
+    end_date = parse_date_or_none(end_str)
 
+    if start_date and end_date and end_date < start_date:
+        flash("End date cannot be before start date", "error")
+        start_date = end_date = None
+        start_str = end_str = ""
 
-    expenses = Expense.query.order_by(Expense.date.desc(), Expense.id.desc()).all()
+        q= Expense.query
+
+        if start_date:
+            q = q.filter(Expense.date >= start_date)
+        if end_date:
+            q = q.filter(Expense.date<= end_date)
+          
+
+    expenses = q.order_by(Expense.date.desc(), Expense.id.desc()).all()
     total = round(sum(e.amount for e in expenses), 2)
     return render_template("index.html", 
                            expenses=expenses, 
