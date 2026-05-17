@@ -1,223 +1,596 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard · Expense Tracker</title>
+{% extends "base.html" %}
+{% block title %}Dashboard · Expense Tracker{% endblock %}
 
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: { extend: { colors: { brand: { DEFAULT: "#38bdf8" } } } },
-      };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body class="h-full bg-slate-900 text-slate-100">
-    <main class="mx-auto max-w-6xl px-4 py-8">
-      <h1 class="text-3xl font-semibold mb-2">Dashboard</h1>
-      <p class="text-slate-400 mb-6">
-        Track spending, filter by date/category, and visualize instantly.
-      </p>
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
-      <!-- Filters + Add form -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Filters -->
-        <section
-          class="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4"
-        >
-          <h2 class="text-lg font-semibold mb-3">Filters</h2>
-          <form class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end pr-5">
-            <label class="text-sm">
-              <span class="block mb-1 text-slate-300">Start</span>
-              <input
-                type="date"
-                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-              />
-            </label>
-            <label class="text-sm">
-              <span class="block mb-1 text-slate-300">End</span>
-              <input
-                type="date"
-                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-              />
-            </label>
-            <label class="text-sm md:col-span-2">
-              <span class="block mb-1 text-slate-300">Category</span>
-              <select
-                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-              >
-                {%for c in categories%}
-                <option value="{{c}}">{{c}}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <div class="flex gap-2">
-              <button
-                class="rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30"
-                type="submit"
-              >
-                Apply
-              </button>
-              <a
-                class="rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700"
-                href="#"
-                >Reset</a
-              >
-            </div>
-          </form>
+{% block content %}
+<div class="flex items-center justify-between mb-2">
+  <div>
+    <h1 class="text-3xl font-semibold">Dashboard</h1>
+    <p class="text-slate-400 mt-1 mb-6">Track spending, filter by date &amp; category, and visualize instantly.</p>
+  </div>
 
-          <!-- Total -->
-          <div class="mt-4 text-sm text-slate-300">
-            <span class="mr-2">Total:</span>
-            <span
-              class="inline-block rounded-xl border border-slate-700 bg-slate-800 px-3 py-1 font-semibold"
-            >
-              $0.00
-            </span>
-          </div>
+    <!-- Income pill -->
+  <form method="post" action="{{ url_for('set_income') }}"
+        class="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-2xl px-5 py-2.5 shadow-sm">
 
-          <!-- Export link -->
-          <div class="mt-3">
-            <a
-              class="text-xs text-slate-400 hover:text-brand underline"
-              href="#"
-            >
-              Export CSV (current filter)
-            </a>
-          </div>
-        </section>
+    <!-- Label -->
+    <span class="text-sm font-bold text-slate-100 tracking-wide">
+      Income
+    </span>
 
-        <!-- Add Expense -->
-        <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <h2 class="text-lg font-semibold mb-3">Add Expense</h2>
-          <form method="post" action="{{url_for('add')}}" class="space-y-3">
-            <label class="block text-sm">
-              <span class="mb-1 block text-slate-300">Description</span>
-              <input
-                name ="description"
-                placeholder="e.g., Groceries"
-                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-              />
-            </label>
-            <div class="grid grid-cols-2 gap-3">
-              <label class="block text-sm">
-                <span class="mb-1 block text-slate-300">Amount</span>
-                <input
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="25.00"
-                  class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                />
-              </label>
-              <label class="block text-sm">
-                <span class="mb-1 block text-slate-300">Date</span>
-                <input
-                  name="date"
-                  type="date"
-                  class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                />
-              </label>
-            </div>
-            <label class="block text-sm">
-              <span class="mb-1 block text-slate-300">Category</span>
-              <select name ="category"
-                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-              >
-                <option>Food</option>
-                <option>Transport</option>
-                <option>Rent</option>
-                <option>Utilities</option>
-              </select>
-            </label>
-            <button
-              class="w-full rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30"
-              type="submit"
-            >
-              Add Expense
-            </button>
-          </form>
-        </section>
+    <!-- Divider -->
+    <span class="w-px h-5 bg-slate-700"></span>
+
+    <!-- Amount -->
+    <div class="flex items-center gap-1">
+      <span class="text-emerald-400 text-sm font-mono font-semibold">$</span>
+
+      <input type="number"
+             step="0.01"
+             min="0"
+             name="inc_amount"
+             id="incAmountInput"
+             value="{{ '%.2f'|format(current_income) }}"
+             class="w-28 bg-transparent border-none outline-none text-sm font-mono font-semibold
+                    {% if current_income > 0 %}text-emerald-400{% else %}text-slate-300{% endif %}
+                    [appearance:textfield]
+                    [&::-webkit-outer-spin-button]:appearance-none
+                    [&::-webkit-inner-spin-button]:appearance-none"
+             oninput="this.classList.remove('text-emerald-400'); this.classList.add('text-slate-100')" />
+    </div>
+
+    <!-- Divider -->
+    <span class="w-px h-5 bg-slate-700"></span>
+
+    <!-- Month -->
+    <div class="flex items-center">
+      <select name="inc_month"
+              class="bg-transparent border-none outline-none text-slate-300 text-sm font-medium cursor-pointer pr-1">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}"
+                  {% if m == inc_month %}selected{% endif %}
+                  class="bg-slate-800">
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Hidden year so backend still works -->
+      <input type="hidden" name="inc_year" value="{{ inc_year }}">
+    </div>
+
+    <!-- Divider -->
+    <span class="w-px h-5 bg-slate-700"></span>
+
+    <!-- Save -->
+    <button type="submit"
+            class="text-sm font-semibold text-brand hover:text-sky-300 transition">
+      Save
+    </button>
+
+  </form>
+</div>
+
+<!-- ── Filters + Add form + Income ── -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+  <!-- Filters -->
+  <section class="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <h2 class="text-lg font-semibold mb-3">Filters</h2>
+    <form method="get" action="{{ url_for('index') }}"
+          class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end pr-5">
+      <input type="hidden" name="inc_year"  value="{{ inc_year }}">
+      <input type="hidden" name="inc_month" value="{{ inc_month }}">
+      <label class="text-sm">
+        <span class="block mb-1 text-slate-300">Start</span>
+        <input name="start" value="{{ start_str or '' }}" type="date"
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <label class="text-sm">
+        <span class="block mb-1 text-slate-300">End</span>
+        <input name="end" value="{{ end_str or '' }}" type="date"
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <label class="text-sm md:col-span-2">
+        <span class="block mb-1 text-slate-300">Category</span>
+        <select name="category"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100">
+          <option value="">All categories</option>
+          {% for c in categories %}
+          <option value="{{ c }}" {% if category_filter == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="flex gap-2">
+        <button type="submit"
+                class="rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30">Apply</button>
+        <a href="{{ url_for('index') }}"
+           class="rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700">Reset</a>
       </div>
+    </form>
 
-      <!-- Total (global) -->
-      <div class="mb-3 mt-6">
-        <span class="text-sm text-slate-300 mr-2">Total:</span>
-        <span
-          class="inline-block rounded-xl border border-slate-700 bg-slate-800 px-3 py-1 font-semibold"
-        >
-          ${{ '%2.f'|format(total or 0)}}
-        </span>
+    <div class="mt-4 text-sm text-slate-300">
+      <span class="mr-2">Total:</span>
+      <span class="inline-block rounded-xl border border-slate-700 bg-slate-800 px-3 py-1 font-semibold">
+        ${{ '%.2f' | format(total or 0) }}
+      </span>
+    </div>
+
+    <div class="mt-3 flex gap-4 flex-wrap">
+      <a href="{{ url_for('export_csv', start=start_str, end=end_str, category=category_filter) }}"
+         class="text-xs text-slate-400 hover:text-brand underline">Export CSV (current filter)</a>
+      <a href="{{ url_for('export_excel', start=start_str, end=end_str, category=category_filter, inc_year=inc_year, inc_month=inc_month) }}"
+         class="text-xs text-emerald-400 hover:text-emerald-300 underline"> Export Monthly Budget (.xlsx)</a>
+    </div>
+  </section>
+
+  <!-- Add Expense -->
+  <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <h2 class="text-lg font-semibold mb-3">Add Expense</h2>
+    <form method="post" action="{{ url_for('add') }}" class="space-y-3">
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Description</span>
+        <input name="description" placeholder="e.g., Groceries"
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Amount</span>
+          <input name="amount" type="number" step="0.01" min="0.01" placeholder="25.00"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Date</span>
+          <input name="date" type="date" value="{{ today }}"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
       </div>
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Category</span>
+        <select name="category"
+                class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100">
+          {% for c in categories %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit"
+              class="w-full rounded-xl bg-brand/20 hover:bg-brand/30 text-brand px-4 py-2 border border-brand/30">
+        Add Expense
+      </button>
+    </form>
+  </section>
+</div>
 
-      <!-- Expenses table -->
-      <section class="rounded-2xl border border-slate-800 bg-slate-900">
-        <div class="px-4 py-3 border-b border-slate-800">
-          <h2 class="text-lg font-semibold">Expenses</h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="text-slate-300 bg-slate-800/50">
-              <tr>
-                <th class="text-left px-4 py-3">Date</th>
-                <th class="text-left px-4 py-3">Description</th>
-                <th class="text-left px-4 py-3">Category</th>
-                <th class="text-right px-4 py-3">Amount</th>
-                <th class="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-                {% if expenses %} {% for e in expenses %}
+<!-- ── Expenses table ── -->
+<section class="rounded-2xl border border-slate-800 bg-slate-900 mt-6">
+  <div class="px-4 py-3 border-b border-slate-800">
+    <h2 class="text-lg font-semibold">Expenses</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="text-slate-300 bg-slate-800/50">
+        <tr>
+          <th class="text-left px-4 py-3">Date</th>
+          <th class="text-left px-4 py-3">Description</th>
+          <th class="text-left px-4 py-3">Category</th>
+          <th class="text-right px-4 py-3">Amount</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if expenses %}
+          {% for e in expenses %}
+          <tr class="border-t border-slate-800 hover:bg-slate-800/30">
+            <td class="px-4 py-2">{{ e.date.strftime('%Y-%m-%d') if e.date else '' }}</td>
+            <td class="px-4 py-2">{{ e.description }}</td>
+            <td class="px-4 py-2">{{ e.category }}</td>
+            <td class="px-4 py-2 text-right">${{ '%.2f' | format(e.amount) }}</td>
+            <td class="px-4 py-2 text-right flex gap-2 justify-end">
+              <a href="{{ url_for('edit_get', expense_id=e.id) }}"
+                 class="text-brand hover:text-sky-300 text-xs border border-brand/30 px-3 py-1 rounded-lg">Edit</a>
+              <form method="post" action="{{ url_for('delete', expense_id=e.id) }}"
+                    onsubmit="return confirm('Delete this expense?')">
+                <button type="submit"
+                        class="text-rose-300 hover:text-rose-200 text-xs border border-rose-400/30 px-3 py-1 rounded-lg">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" class="px-4 py-6 text-center text-slate-400">No expenses yet — add your first one above.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
 
-              <tr class="border-t border-slate-800 hover:bg-slate-800/30">
-                <td class="px-4 py-2">{{e.date.strftime("%Y-%m-%d") if e.date else ''}}</td>
-                <td class="px-4 py-2">{{e.description}}</td>
-                <td class="px-4 py-2">{{e.category}}</td>
-                <td class="px-4 py-2 text-right">{{ '%.2f'|format(e.amount) }}</td>
-                <td class="px-4 py-2 text-right">                   
-                <form 
-                      method = "post" 
-                      action="{{url_for('delete', expense_id=e.id)}}"
-                      onsubmit="return confirm('Are you sure you want to delete')"
+<!-- ── Savings & Debt ── -->
+<div id="savings" class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                >
-                  <button
-                    class="text-rose-300 hover:text-rose-200 text-xs border border-rose-400/30 px-3 py-1 rounded-lg"
-                  >
-                    Delete
-                  </button>
-                  </form>
-                </td>
-              </tr>
+  <!-- SAVINGS -->
+  <section class="rounded-2xl border border-emerald-900/40 bg-slate-900">
+    <div class="px-4 py-3 border-b border-emerald-900/40 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-emerald-300">Savings</h2>
+      <button onclick="document.getElementById('addSavingModal').classList.remove('hidden')"
+              class="text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1">
+        + Add
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="text-slate-300 bg-slate-800/50">
+          <tr>
+            <th class="text-left px-4 py-3">Description</th>
+            <th class="text-right px-4 py-3">Budget</th>
+            <th class="text-right px-4 py-3">Actual</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if savings %}
+            {% for s in savings %}
+            <tr class="border-t border-slate-800 hover:bg-slate-800/30" id="sav-row-{{ s.id }}">
+              <td class="px-4 py-2 sav-desc">{{ s.description }}</td>
+              <td class="px-4 py-2 text-right sav-budget">${{ '%.2f' | format(s.budget) }}</td>
+              <td class="px-4 py-2 text-right sav-actual">${{ '%.2f' | format(s.actual) }}</td>
+              <td class="px-4 py-2 text-right flex gap-1 justify-end">
+                <button onclick="openEditSaving({{ s.id }}, '{{ s.description }}', {{ s.budget }}, {{ s.actual }})"
+                        class="text-brand hover:text-sky-300 text-xs border border-brand/30 px-2 py-1 rounded-lg">Edit</button>
+                <form method="post" action="{{ url_for('delete_saving', saving_id=s.id) }}"
+                      onsubmit="return confirm('Delete this saving?')">
+                  <button type="submit"
+                          class="text-rose-300 hover:text-rose-200 text-xs border border-rose-400/30 px-2 py-1 rounded-lg">Del</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">No savings yet.</td></tr>
+          {% endif %}
+        </tbody>
+        <tfoot class="border-t border-emerald-900/40 bg-slate-800/30">
+          <tr>
+            <td class="px-4 py-2 font-semibold text-emerald-300">Total</td>
+            <td class="px-4 py-2 text-right font-semibold text-emerald-300">${{ '%.2f' | format(savings_budget_total) }}</td>
+            <td class="px-4 py-2 text-right font-semibold text-emerald-300">${{ '%.2f' | format(savings_actual_total) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
 
-              {% endfor %} {% else %}
+  <!-- DEBT -->
+  <section id="debt" class="rounded-2xl border border-rose-900/40 bg-slate-900">
+    <div class="px-4 py-3 border-b border-rose-900/40 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-rose-300">Debt</h2>
+      <button onclick="document.getElementById('addDebtModal').classList.remove('hidden')"
+              class="text-xs rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 px-3 py-1">
+        + Add
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="text-slate-300 bg-slate-800/50">
+          <tr>
+            <th class="text-left px-4 py-3">Description</th>
+            <th class="text-right px-4 py-3">Budget</th>
+            <th class="text-right px-4 py-3">Actual</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if debts %}
+            {% for d in debts %}
+            <tr class="border-t border-slate-800 hover:bg-slate-800/30">
+              <td class="px-4 py-2">{{ d.description }}</td>
+              <td class="px-4 py-2 text-right">${{ '%.2f' | format(d.budget) }}</td>
+              <td class="px-4 py-2 text-right">${{ '%.2f' | format(d.actual) }}</td>
+              <td class="px-4 py-2 text-right flex gap-1 justify-end">
+                <button onclick="openEditDebt({{ d.id }}, '{{ d.description }}', {{ d.budget }}, {{ d.actual }})"
+                        class="text-brand hover:text-sky-300 text-xs border border-brand/30 px-2 py-1 rounded-lg">Edit</button>
+                <form method="post" action="{{ url_for('delete_debt', debt_id=d.id) }}"
+                      onsubmit="return confirm('Delete this debt?')">
+                  <button type="submit"
+                          class="text-rose-300 hover:text-rose-200 text-xs border border-rose-400/30 px-2 py-1 rounded-lg">Del</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">No debts yet.</td></tr>
+          {% endif %}
+        </tbody>
+        <tfoot class="border-t border-rose-900/40 bg-slate-800/30">
+          <tr>
+            <td class="px-4 py-2 font-semibold text-rose-300">Total</td>
+            <td class="px-4 py-2 text-right font-semibold text-rose-300">${{ '%.2f' | format(debt_budget_total) }}</td>
+            <td class="px-4 py-2 text-right font-semibold text-rose-300">${{ '%.2f' | format(debt_actual_total) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+</div>
 
-              <tr>
-                <td colspan="5" class="px-4 py-6 text-center text-slate-400">
-                  No expenses yet — add your first one above.
-                </td>
-              </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      </section>
+<!-- ── Charts ── -->
+<section class="mt-6 grid grid-cols-2 gap-4">
+  <!-- Row 1: By Category + Spending Over Time -->
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <h3 class="font-semibold mb-2">By Category</h3>
+    {% if cat_totals %}
+      <canvas id="catChart" height="220" style="max-height:220px"></canvas>
+    {% else %}
+      <p class="text-slate-500 text-sm py-6 text-center">No data for the selected range.</p>
+    {% endif %}
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <h3 class="font-semibold mb-2">Spending Over Time</h3>
+    {% if day_totals %}
+      <canvas id="dayChart" height="220" style="max-height:220px"></canvas>
+    {% else %}
+      <p class="text-slate-500 text-sm py-6 text-center">No data for the selected range.</p>
+    {% endif %}
+  </div>
 
-      <!-- Charts -->
-      <section class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <h3 class="font-semibold mb-2">By Category</h3>
-          <canvas id="catChart" height="140"></canvas>
-        </div>
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <h3 class="font-semibold mb-2">Spending Over Time</h3>
-          <canvas id="dayChart" height="140"></canvas>
-        </div>
-      </section>
-    </main>
-  </body>
-</html>
+  <!-- Row 2: Income vs Debt bar full-width spanning both columns -->
+  <div class="col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <h3 class="font-semibold mb-3">Income vs Debt
+      <span class="text-slate-500 text-xs font-normal ml-1">{{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][inc_month-1] }} {{ inc_year }}</span>
+    </h3>
+    <canvas id="incDebtChart" height="120" style="max-height:120px"></canvas>
+  </div>
+</section>
+
+<!-- ── Add Saving Modal ── -->
+<div id="addSavingModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-slate-900 border border-emerald-900/50 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+    <h3 class="text-lg font-semibold text-emerald-300 mb-4">Add Saving</h3>
+    <form method="post" action="{{ url_for('add_saving') }}" class="space-y-3">
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Description</span>
+        <input name="description" required placeholder="e.g., Emergency Fund"
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Budget</span>
+          <input name="budget" type="number" step="0.01" min="0" value="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Actual</span>
+          <input name="actual" type="number" step="0.01" min="0" value="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-4 py-2 border border-emerald-500/30">Save</button>
+        <button type="button" onclick="document.getElementById('addSavingModal').classList.add('hidden')"
+                class="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Edit Saving Modal ── -->
+<div id="editSavingModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-slate-900 border border-emerald-900/50 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+    <h3 class="text-lg font-semibold text-emerald-300 mb-4">Edit Saving</h3>
+    <form id="editSavingForm" method="post" class="space-y-3">
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Description</span>
+        <input id="editSavingDesc" name="description" required
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Budget</span>
+          <input id="editSavingBudget" name="budget" type="number" step="0.01" min="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Actual</span>
+          <input id="editSavingActual" name="actual" type="number" step="0.01" min="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-4 py-2 border border-emerald-500/30">Update</button>
+        <button type="button" onclick="document.getElementById('editSavingModal').classList.add('hidden')"
+                class="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Add Debt Modal ── -->
+<div id="addDebtModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+    <h3 class="text-lg font-semibold text-rose-300 mb-4">Add Debt</h3>
+    <form method="post" action="{{ url_for('add_debt') }}" class="space-y-3">
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Description</span>
+        <input name="description" required placeholder="e.g., Car Loan"
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Budget</span>
+          <input name="budget" type="number" step="0.01" min="0" value="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Actual</span>
+          <input name="actual" type="number" step="0.01" min="0" value="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2 border border-rose-500/30">Save</button>
+        <button type="button" onclick="document.getElementById('addDebtModal').classList.add('hidden')"
+                class="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Edit Debt Modal ── -->
+<div id="editDebtModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+    <h3 class="text-lg font-semibold text-rose-300 mb-4">Edit Debt</h3>
+    <form id="editDebtForm" method="post" class="space-y-3">
+      <label class="block text-sm">
+        <span class="mb-1 block text-slate-300">Description</span>
+        <input id="editDebtDesc" name="description" required
+               class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Budget</span>
+          <input id="editDebtBudget" name="budget" type="number" step="0.01" min="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-1 block text-slate-300">Actual</span>
+          <input id="editDebtActual" name="actual" type="number" step="0.01" min="0"
+                 class="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100" />
+        </label>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2 border border-rose-500/30">Update</button>
+        <button type="button" onclick="document.getElementById('editDebtModal').classList.add('hidden')"
+                class="flex-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 border border-slate-700">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block body_end %}
+<script>
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.borderColor = '#1e293b';
+
+  const PALETTE = [
+    '#38bdf8','#818cf8','#34d399','#fb923c',
+    '#f472b6','#a78bfa','#fbbf24','#60a5fa'
+  ];
+
+  const catData = {{ cat_totals | tojson }};
+  if (Object.keys(catData).length) {
+    new Chart(document.getElementById('catChart'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catData),
+        datasets: [{ data: Object.values(catData), backgroundColor: PALETTE,
+                     borderColor: '#0f172a', borderWidth: 2, hoverOffset: 8 }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12 } },
+          tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.toFixed(2)}` } }
+        },
+      },
+    });
+  }
+
+  const dayData = {{ day_totals | tojson }};
+  if (Object.keys(dayData).length) {
+    new Chart(document.getElementById('dayChart'), {
+      type: 'line',
+      data: {
+        labels: Object.keys(dayData),
+        datasets: [{ label: 'Daily Total', data: Object.values(dayData),
+                     borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.12)',
+                     tension: 0.35, fill: true, pointRadius: 4, pointHoverRadius: 6,
+                     pointBackgroundColor: '#38bdf8' }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { maxRotation: 45, maxTicksLimit: 10 }, grid: { color: '#1e293b' } },
+          y: { beginAtZero: true, grid: { color: '#1e293b' },
+               ticks: { callback: v => '$' + v.toFixed(0) } },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.y.toFixed(2)}` } }
+        },
+      },
+    });
+  }
+
+  // ── Income vs Debt bar chart ─────────────────
+  const _income = {{ current_income | tojson }};
+  const _debt   = {{ debt_actual_total | tojson }};
+  new Chart(document.getElementById('incDebtChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Income', 'Debt'],
+      datasets: [{
+        data: [_income, _debt],
+        backgroundColor: ['rgba(52,211,153,0.25)', 'rgba(251,113,133,0.22)'],
+        borderColor:     ['#34d399', '#fb7185'],
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.y.toFixed(2)}` } },
+      },
+      scales: {
+        x: { grid: { color: '#1e293b' } },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#1e293b' },
+          ticks: { callback: v => '$' + v.toLocaleString() },
+        },
+      },
+    },
+  });
+
+  // Saving edit modal
+  function openEditSaving(id, desc, budget, actual) {
+    document.getElementById('editSavingDesc').value   = desc;
+    document.getElementById('editSavingBudget').value = budget;
+    document.getElementById('editSavingActual').value = actual;
+    document.getElementById('editSavingForm').action  = `/savings/edit/${id}`;
+    document.getElementById('editSavingModal').classList.remove('hidden');
+  }
+
+  // Debt edit modal
+  function openEditDebt(id, desc, budget, actual) {
+    document.getElementById('editDebtDesc').value   = desc;
+    document.getElementById('editDebtBudget').value = budget;
+    document.getElementById('editDebtActual').value = actual;
+    document.getElementById('editDebtForm').action  = `/debt/edit/${id}`;
+    document.getElementById('editDebtModal').classList.remove('hidden');
+  }
+
+  // Close modals on backdrop click
+  ['addSavingModal','editSavingModal','addDebtModal','editDebtModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) this.classList.add('hidden');
+    });
+  });
+</script>
+{% endblock %}
